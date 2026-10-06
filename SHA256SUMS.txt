@@ -1,0 +1,2 @@
+39c8b9a61bd338335d178de00dd084526a9f0f4ae966ba0d4f732a4a3a7a6a46  bin/RDCTray.exe
+24403ad8aa0359e315e8dac64ec14f32ab215f368bc9c27f50b28747688e2302  bin/ChatGPTProxyLauncher.exe
