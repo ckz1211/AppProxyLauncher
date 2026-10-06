@@ -31,9 +31,7 @@ static class Program
             string location;
             using (var p = Process.Start(query))
             {
-                location = p.StandardOutput.ReadToEnd().Trim();
-                string error = p.StandardError.ReadToEnd();
-                if (!p.WaitForExit(15000) || p.ExitCode != 0) throw new Exception("无法读取已安装的 ChatGPT 客户端：" + error);
+                location = ReadProcess(p, 15000).Trim();
             }
             string exe = Path.Combine(location, "app", "ChatGPT.exe");
             stage = "validate package path";
@@ -56,16 +54,12 @@ static class Program
                 // the application or changing package debugging settings. It drops caller env,
                 // so our inner launcher must set the proxy AFTER entering package context.
                 stage = "enter package context";
-                string self = Process.GetCurrentProcess().MainModule.FileName.Replace("'", "''");
-                string command = "Invoke-CommandInDesktopPackage -PackageFamilyName OpenAI.Codex_2p2nqsd0c76g0 -AppId App -Command '" + self + "' -Args '" + (probePackage ? "--in-package --probe-package" : "--in-package") + " --port=" + Port + "' -ErrorAction Stop";
-                var enter = new ProcessStartInfo(query.FileName, "-NoLogo -NoProfile -NonInteractive -Command \"" + command + "\"")
+                string command = PackageCommand(Process.GetCurrentProcess().MainModule.FileName, Port, probePackage);
+                var enter = new ProcessStartInfo(query.FileName, EncodedArguments(command))
                 { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
                 using (var p = Process.Start(enter))
                 {
-                    string output = p.StandardOutput.ReadToEnd();
-                    string error = p.StandardError.ReadToEnd();
-                    p.WaitForExit();
-                    if (p.ExitCode != 0) throw new Exception("应用包启动接口失败：" + error);
+                    ReadProcess(p, 30000);
                 }
                 File.AppendAllText(log, DateTime.Now.ToString("o") + " Package-context handoff completed proxy=" + Proxy + Environment.NewLine, Encoding.UTF8);
                 return;
@@ -74,7 +68,7 @@ static class Program
             if (GetCurrentPackageFullName(ref packageLength, null) != 122)
                 throw new Exception("启动器没有获得预期的应用包上下文");
             var packageName = new StringBuilder((int)packageLength);
-            if (GetCurrentPackageFullName(ref packageLength, packageName) != 0 || !packageName.ToString().StartsWith("OpenAI.Codex_"))
+            if (GetCurrentPackageFullName(ref packageLength, packageName) != 0 || !packageName.ToString().StartsWith("OpenAI.Codex_", StringComparison.Ordinal) || !packageName.ToString().EndsWith("_2p2nqsd0c76g0", StringComparison.Ordinal))
                 throw new Exception("启动器的应用包身份不匹配");
             var info = new ProcessStartInfo(exe, probePackage ? "--version" : "") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(exe) };
             // Windows environment keys are case-insensitive. Only this process tree inherits them.
@@ -102,6 +96,29 @@ static class Program
             Environment.ExitCode = ex is ArgumentException ? 2 : 1;
             if (!diagnose && !probePackage) MessageBox.Show(ex.Message, "ChatGPT 独立代理启动失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+    static string PackageCommand(string self, int port, bool probe)
+    {
+        return "Invoke-CommandInDesktopPackage -PackageFamilyName OpenAI.Codex_2p2nqsd0c76g0 -AppId App -Command '" + self.Replace("'", "''") + "' -Args '" + (probe ? "--in-package --probe-package" : "--in-package") + " --port=" + port + "' -ErrorAction Stop";
+    }
+    static string EncodedArguments(string command)
+    {
+        return "-NoLogo -NoProfile -NonInteractive -EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
+    }
+    // Drain both pipes concurrently; reading to EOF before WaitForExit defeats its timeout.
+    static string ReadProcess(Process process, int timeout)
+    {
+        var output = process.StandardOutput.ReadToEndAsync();
+        var error = process.StandardError.ReadToEndAsync();
+        if (!process.WaitForExit(timeout))
+        {
+            try { process.Kill(); } catch { }
+            throw new TimeoutException("Windows 应用包接口响应超时");
+        }
+        if (!System.Threading.Tasks.Task.WaitAll(new System.Threading.Tasks.Task[] { output, error }, timeout))
+            throw new TimeoutException("Windows 应用包接口输出超时");
+        if (process.ExitCode != 0) throw new Exception("Windows 应用包接口失败：" + error.Result);
+        return output.Result;
     }
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     static extern int GetCurrentPackageFullName(ref uint length, StringBuilder packageFullName);

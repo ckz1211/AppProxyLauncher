@@ -8,8 +8,8 @@ AppProxyLauncher provides Windows launchers for ChatGPT/Codex and Remote Desktop
 
 ## 状态 / Status
 
-私有、审计前版本。完成后续安全与隐私审计前保持私有。
-Private, pre-audit version. Keep the repository private until the planned security and privacy review is complete.
+私有、审计修订版。启动器已完成一次源码、隐私和隔离回归检查；RDC 上游依赖仍有未解决的安全公告，暂未通过公开发布检查。详见 [SECURITY-REVIEW.md](SECURITY-REVIEW.md)。
+Private, review revision. Launcher source, privacy and isolated regression checks have been performed. Unresolved RDC dependency advisories currently block public release. See [SECURITY-REVIEW.md](SECURITY-REVIEW.md).
 
 本项目是独立包装程序，不是 OpenAI、Desktop Commander 或代理软件的官方产品。它不提供代理服务器，也不保证绕过设备管理策略。
 These are independent wrappers, not official products of OpenAI, Desktop Commander, or proxy-software vendors. They do not provide a proxy server or override device-management policy.
@@ -30,6 +30,9 @@ These are independent wrappers, not official products of OpenAI, Desktop Command
 
 进程树内的子进程可能继承 ChatGPT 的代理环境变量；这不等于逐个网络请求只代理 Remote Control。RDC 更新会从 npm 下载并执行第三方 Agent，npm 安装可能执行包的安装脚本。
 Child processes in the ChatGPT process tree may inherit its proxy variables; this is not request-level isolation of Remote Control alone. RDC updates download and run a third-party Agent from npm, whose installation may execute package installation scripts.
+
+NO_PROXY 的 CIDR、域名后缀支持取决于应用使用的网络库；`.cn` 不代表所有国内流量。本工具不是强制网络隔离或防泄漏工具，无法保证所有客户端请求都遵循环境变量。已有的系统代理也可能继续影响应用。
+CIDR and domain-suffix support in NO_PROXY depends on each networking library. `.cn` does not cover all domestic traffic. This is not an enforced network isolation or leak-prevention tool: clients may ignore proxy variables, and existing system proxy settings can still affect applications.
 
 ## 环境 / Requirements
 
@@ -65,6 +68,7 @@ For ChatGPT, fully exit the existing client before launching the wrapper. For RD
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Test.ps1
 ```
 
 使用 Windows 自带的 .NET Framework C# 编译器，输出到 `bin/`；不生成 PDB 调试文件。默认端口只在 `src\ProxyPortOptions.cs` 中定义，两个 exe 共用这份源码。
@@ -78,4 +82,4 @@ Build with the Windows .NET Framework C# compiler. Output goes to `bin/` without
 
 The repository includes reviewed source, build/setup scripts, documentation, and freshly rebuilt executables. No personal paths, device IDs, personal emails, pairing files, credentials, runtime logs, or machine-specific diagnostic records are included. Runtime logs and third-party pairing data remain local and may contain sensitive information; do not commit them. File scanning is not a complete security audit.
 
-参见 [PRIVACY-CHECK.md](PRIVACY-CHECK.md)、[SHA256SUMS.txt](SHA256SUMS.txt) 与 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+参见 [PRIVACY-CHECK.md](PRIVACY-CHECK.md)、[SECURITY-REVIEW.md](SECURITY-REVIEW.md)、[SHA256SUMS.txt](SHA256SUMS.txt) 与 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。

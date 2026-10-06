@@ -23,6 +23,6 @@ Reviewed the four source files, two setup/build scripts, documentation, and the 
 
 ## Limits / 限制
 
-This is a payload/privacy check, not a completed security audit. Pattern scans cannot prove that software has no vulnerabilities or that every possible secret format is absent. The repository remains private for the planned later audit.
+This payload check was followed by the security review in SECURITY-REVIEW.md, including reachable Git history and rebuilt executables. Pattern scans cannot prove that software has no vulnerabilities or that every possible secret format is absent. Unresolved upstream dependency advisories keep the repository private.
 
-这是上传内容检查，不能代替完整安全审计，也不能证明所有可能格式的秘密或漏洞都不存在。仓库保持私有，等待后续审计。
+后续安全审查见 SECURITY-REVIEW.md，包含可达 Git 历史和重新编译的程序检查。模式扫描不能证明所有可能格式的秘密或漏洞都不存在。上游依赖公告尚未解决，仓库继续保持私有。

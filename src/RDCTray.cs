@@ -80,7 +80,7 @@ sealed class TrayContext : ApplicationContext
     readonly object logLock = new object();
     readonly JavaScriptSerializer serializer = new JavaScriptSerializer();
     readonly string node = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "nodejs", "node.exe");
-    readonly string npm = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "nodejs", "npm.cmd");
+    readonly string npm = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "nodejs", "node_modules", "npm", "bin", "npm-cli.js");
     readonly IntPtr job;
     Process agent;
     Process installer;
@@ -119,7 +119,7 @@ sealed class TrayContext : ApplicationContext
     }
 
     static string Quote(string text) { return "\"" + text.Replace("\"", "") + "\""; }
-    static bool ValidVersion(string v) { return v != null && Regex.IsMatch(v, @"^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$"); }
+    static bool ValidVersion(string v) { return v != null && v.Length <= 128 && Regex.IsMatch(v, @"\A[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?\z"); }
     string VersionDir(string v) { return Path.Combine(Program.Root, "versions", v); }
     string Entry(string v) { return Path.Combine(VersionDir(v), "node_modules", "@wonderwhy-er", "desktop-commander", "dist", "index.js"); }
     string CurrentFile { get { return Path.Combine(Program.Root, "current-version.txt"); } }
@@ -201,10 +201,12 @@ sealed class TrayContext : ApplicationContext
         Directory.CreateDirectory(stage);
         File.WriteAllText(Path.Combine(stage, "package.json"), "{\"name\":\"rdc-tray-runtime\",\"version\":\"1.0.0\",\"private\":true}", Encoding.UTF8);
         string logPath = Path.Combine(Program.Root, "logs", "update-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".log");
-        string command = Quote(npm) + " install --prefix " + Quote(stage) + " --registry=https://registry.npmjs.org --no-audit --no-fund --no-update-notifier --omit=dev @wonderwhy-er/desktop-commander@" + v;
-        var info = new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), "/d /s /c \"" + command + "\"") {
+        // Invoke the JavaScript CLI directly: user paths must never be interpreted by cmd.exe.
+        string command = Quote(npm) + " install --prefix " + Quote(stage) + " --registry=https://registry.npmjs.org --@wonderwhy-er:registry=https://registry.npmjs.org --strict-ssl=true --no-audit --no-fund --no-update-notifier --omit=dev @wonderwhy-er/desktop-commander@" + v;
+        var info = new ProcessStartInfo(node, command) {
             UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
+            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
+            WorkingDirectory = stage
         };
         info.EnvironmentVariables["PUPPETEER_SKIP_DOWNLOAD"] = "true";
         info.EnvironmentVariables["NPM_CONFIG_UPDATE_NOTIFIER"] = "false";
@@ -226,7 +228,7 @@ sealed class TrayContext : ApplicationContext
         }
         string package = Path.Combine(stage, "node_modules", "@wonderwhy-er", "desktop-commander", "package.json");
         var installed = serializer.Deserialize<Dictionary<string, object>>(File.ReadAllText(package));
-        if (Convert.ToString(installed["version"]) != v || !File.Exists(Path.Combine(Path.GetDirectoryName(package), "dist", "index.js")))
+        if (Convert.ToString(installed["name"]) != "@wonderwhy-er/desktop-commander" || Convert.ToString(installed["version"]) != v || !File.Exists(Path.Combine(Path.GetDirectoryName(package), "dist", "index.js")))
             throw new Exception("新版本校验失败，已有版本保持不变");
         Directory.Move(stage, VersionDir(v));
         Log("已安装并校验 RDC " + v);
