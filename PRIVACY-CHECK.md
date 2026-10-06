@@ -1,6 +1,6 @@
-﻿# Pre-upload privacy check / 上传前隐私检查
+# Pre-upload privacy check / 上传前隐私检查
 
-Date / 日期: 2026-10-06
+Date / 日期: 2026-10-07 (second review / 第二轮)
 
 ## Scope / 范围
 
@@ -23,6 +23,6 @@ Reviewed the four source files, two setup/build scripts, documentation, and the 
 
 ## Limits / 限制
 
-This payload check was followed by the security review in SECURITY-REVIEW.md, including reachable Git history and rebuilt executables. Pattern scans cannot prove that software has no vulnerabilities or that every possible secret format is absent. Unresolved upstream dependency advisories keep the repository private.
+This payload check was followed by the security review in SECURITY-REVIEW.md, including reachable Git history and rebuilt executables. Pattern scans cannot prove that software has no vulnerabilities or that every possible secret format is absent. The second review applies the launcher-only scope described in DISCLAIMER.md; upstream findings are informational and outside the publication gate.
 
-后续安全审查见 SECURITY-REVIEW.md，包含可达 Git 历史和重新编译的程序检查。模式扫描不能证明所有可能格式的秘密或漏洞都不存在。上游依赖公告尚未解决，仓库继续保持私有。
+后续安全审查见 SECURITY-REVIEW.md，包含可达 Git 历史和重新编译的程序检查。模式扫描不能证明所有可能格式的秘密或漏洞都不存在。第二轮按 DISCLAIMER.md 的启动器壳层范围进行，上游信息不作为此次发布阻碍。

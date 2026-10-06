@@ -1,4 +1,4 @@
-﻿import readline from 'node:readline';
+import readline from 'node:readline';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 // Process-local dispatcher: only RDC's cloud services use the local proxy.
@@ -7,7 +7,7 @@ const requireProxy = createRequire(new URL('./proxy-runtime/package.json', impor
 const { Agent, Pool, ProxyAgent, setGlobalDispatcher } = requireProxy('undici');
 const portArgument = process.argv[3] ?? '';
 const proxyPort = Number(portArgument.slice(7));
-if (!/^--port=\d+$/.test(portArgument) || !Number.isInteger(proxyPort) || proxyPort < 1 || proxyPort > 65535)
+if (/^--port=[0-9]+$/.exec(portArgument)?.[0] !== portArgument || !Number.isInteger(proxyPort) || proxyPort < 1 || proxyPort > 65535)
   throw new Error('Agent host requires a validated --port=1..65535 from the tray launcher');
 const proxyUrl = `http://127.0.0.1:${proxyPort}`;
 const route = origin => {

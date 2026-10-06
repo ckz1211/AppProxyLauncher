@@ -6,13 +6,16 @@
 **English**
 AppProxyLauncher provides Windows launchers for ChatGPT/Codex and Remote Desktop Commander (Desktop Commander) that use an existing local HTTP/mixed proxy. It is intended for users who prefer to avoid TUN mode or cannot conveniently enable it because administrator access is restricted. It supports configurable proxy ports, an RDC system-tray launcher, and RDC update checks on launch.
 
-## 状态 / Status
+## 责任范围 / Scope and disclaimer
 
-私有、审计修订版。启动器已完成一次源码、隐私和隔离回归检查；RDC 上游依赖仍有未解决的安全公告，暂未通过公开发布检查。详见 [SECURITY-REVIEW.md](SECURITY-REVIEW.md)。
-Private, review revision. Launcher source, privacy and isolated regression checks have been performed. Unresolved RDC dependency advisories currently block public release. See [SECURITY-REVIEW.md](SECURITY-REVIEW.md).
+本项目是面向不希望使用 TUN 或管理员权限受限用户的独立启动器壳层，不是 OpenAI、Desktop Commander 或代理软件的官方产品。它使用已有的本地 HTTP/mixed 代理，不提供代理服务器。
+These are independent launcher wrappers for users who prefer to avoid TUN or have restricted administrator access. They use an existing local HTTP/mixed proxy and are not official vendor products or proxy servers.
 
-本项目是独立包装程序，不是 OpenAI、Desktop Commander 或代理软件的官方产品。它不提供代理服务器，也不保证绕过设备管理策略。
-These are independent wrappers, not official products of OpenAI, Desktop Commander, or proxy-software vendors. They do not provide a proxy server or override device-management policy.
+安全审查和维护范围仅限本项目新增或修改的源码与功能。上游软件的内部安全与修复由各自作者负责，使用者自行负责其权限、配置和使用行为。启动器自身引入的漏洞或隐私泄露仍在本项目范围内。软件按现状提供，具体责任范围与限制见 [DISCLAIMER.md](DISCLAIMER.md)。
+Security review and maintenance cover this project's own source and functionality. Upstream software remains the responsibility of its maintainers; users are responsible for their permissions, configuration and actions. Wrapper-introduced defects and privacy leaks remain in scope. Software is provided as is; see [DISCLAIMER.md](DISCLAIMER.md).
+
+已完成启动器壳层的安全与隐私审查及隔离回归测试，结果见 [SECURITY-REVIEW.md](SECURITY-REVIEW.md)。这不表示上游组件已经审计通过。
+A scoped launcher security/privacy review and isolated regression tests have been completed. See [SECURITY-REVIEW.md](SECURITY-REVIEW.md). This is not a certification of upstream components.
 
 ## 功能 / Features
 
@@ -69,6 +72,7 @@ For ChatGPT, fully exit the existing client before launching the wrapper. For RD
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Test.ps1
+node .\scripts\Test-AgentHost.mjs
 ```
 
 使用 Windows 自带的 .NET Framework C# 编译器，输出到 `bin/`；不生成 PDB 调试文件。默认端口只在 `src\ProxyPortOptions.cs` 中定义，两个 exe 共用这份源码。
